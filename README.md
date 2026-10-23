@@ -6,7 +6,7 @@ Emergency Medical Dispatch for Ghana: four applications on one modular Flask bac
 |---|---|---|---|
 | Civilian PWA | `/civilian/` | Bystanders | None (bearer token per report) |
 | Paramedic | `/paramedic/` | Ambulance crews (mobile) | `paramedic` |
-| Hospital command centre | `/hospital/` | ER desks (desktop) | `hospital_admin` |
+| Hospital command centre | `/hospital/` | ER desks (desktop) | `hospital` |
 | Super Admin / Dev portal | `/admin/` | System administrators | `super_admin` |
 
 > **Why this matters for Ghana:** see [docs/IMPACT_AND_RATIONALE.md](docs/IMPACT_AND_RATIONALE.md) for the national statistics behind the project and the case for a local open-weight AI model (30 cited sources).
