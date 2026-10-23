@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Get emergency help - {{ APP_NAME }}{% endblock %}
+{% block head %}
+<link rel="manifest" href="{{ url_for('civilian.manifest') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/civilian.css') }}">
+{% endblock %}
+{% block body_class %}civ{% endblock %}
+{% block body %}
+<header class="civ-bar">
+  <span class="civ-brand">
+    <img src="{{ url_for('static', filename='img/mark-red.png') }}" alt="" width="28" height="28">
+    MediDispatch GH
+  </span>
+  <a class="civ-call" href="tel:{{ EMERGENCY_NUMBER }}">Call {{ EMERGENCY_NUMBER }}</a>
+</header>
+
+<div id="net-banner" class="civ-banner hidden" role="alert">
+  No internet connection. Your report will send automatically when you're back online. If someone's life is in danger, call {{ EMERGENCY_NUMBER }} now.
+</div>
+
+<main class="civ-main">
+
+  <!-- Screen 1: the button -->
+  <section class="screen" data-screen="start" aria-labelledby="start-title">
+    <h1 id="start-title" class="sr-only">Get emergency help</h1>
+    <button id="help-btn" class="help-btn" type="button">
+      <span class="help-btn-label">Get help</span>
+      <span class="help-btn-sub">Ambulance &amp; first aid</span>
+    </button>
+    <p class="civ-lead">Press the button to send your location to the nearest ambulance crew. It takes under a minute.</p>
+    <a class="btn btn-ghost civ-alt" href="tel:{{ EMERGENCY_NUMBER }}">Or call {{ EMERGENCY_NUMBER }} directly</a>
+  </section>
+
+  <!-- Screen 2: who is reporting -->
+  <section class="screen hidden" data-screen="who" aria-labelledby="who-title">
+    <h1 id="who-title">Who is reporting?</h1>
+    <p class="civ-lead">The ambulance crew will call this number if they can't find you.</p>
+    <form id="who-form" novalidate>
+      <div class="field">
+        <label for="r-name">Your name</label>
+        <input id="r-name" name="name" type="text" autocomplete="name" maxlength="80" required>
+        <span class="field-error" data-error-for="name"></span>
+      </div>
+      <div class="field">
+        <label for="r-phone">Your phone number</label>
+        <input id="r-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel"
+               placeholder="024 123 4567" maxlength="20" required>
+        <span class="field-error" data-error-for="phone"></span>
+      </div>
+      <div class="gps-line" data-gps-status>Finding your location...</div>
+      <button class="btn btn-danger btn-block civ-next" type="submit">Next: what's happening?</button>
+    </form>
+    <p class="civ-fine">Your name, number, location and any photos you choose to send are shared only with the ambulance crew and receiving hospital, stored encrypted, and handled under Ghana's Data Protection Act.</p>
+  </section>
+
+  <!-- Screen 3: situation -->
+  <section class="screen hidden" data-screen="what" aria-labelledby="what-title">
+    <h1 id="what-title">What is happening?</h1>
+    <p class="civ-lead">Tap the closest match. Your report sends straight away.</p>
+    <div class="sit-grid" role="list">
+      {% for key, label in situations.items() %}
+      <button class="sit" type="button" role="listitem" data-situation="{{ key }}">{{ label }}</button>
+      {% endfor %}
+    </div>
+    <span class="field-error" data-error-for="situation"></span>
+    <button class="btn btn-ghost" type="button" data-back="who">Back</button>
+  </section>
+
+  <!-- Screen 4: sending -->
+  <section class="screen hidden" data-screen="sending" aria-live="assertive">
+    <div class="sending">
+      <div class="spinner" aria-hidden="true"></div>
+      <h1 id="sending-title">Sending your report...</h1>
+      <p class="civ-lead" id="sending-detail">Keep this page open.</p>
+      <a class="btn btn-danger btn-block" href="tel:{{ EMERGENCY_NUMBER }}">Call {{ EMERGENCY_NUMBER }}</a>
+    </div>
+  </section>
+
+  <!-- Screen 5: help is coming -->
+  <section class="screen hidden" data-screen="help" aria-labelledby="help-title">
+    <div class="status-card">
+      <p class="status-ref">Report <strong id="h-ref" class="figure">-</strong></p>
+      <h1 id="help-title" data-status-text>Report received</h1>
+      <p class="civ-lead" data-status-detail>We're alerting the nearest ambulance crew.</p>
+      <div class="gps-line" data-gps-status>Sharing your location...</div>
+      <button class="btn btn-ghost btn-small" type="button" id="gps-stop">Stop sharing location</button>
+    </div>
+
+    <section class="aid" aria-labelledby="aid-title">
+      <h2 id="aid-title">While you wait</h2>
+      <ol class="aid-steps" id="aid-steps"></ol>
+      <ul class="aid-general">
+        {% for step in general_steps %}<li>{{ step }}</li>{% endfor %}
+      </ul>
+    </section>
+
+    <!-- Optional camera: explicit consent, visible preview, stoppable any time -->
+    <section class="cam" aria-labelledby="cam-title">
+      <h2 id="cam-title">Photo for the crew <span class="muted">(optional)</span></h2>
+      <p class="civ-fine">A photo of the scene or injury helps the hospital prepare. You choose each photo before it is sent.</p>
+
+      <div id="cam-intro">
+        <button class="btn btn-block" type="button" id="cam-open">Take a photo</button>
+      </div>
+
+      <div id="cam-consent" class="cam-consent hidden">
+        <p>The camera only runs while you can see the preview on this screen. Nothing is recorded or sent until you press <strong>Send photo</strong>. You can stop the camera at any time.</p>
+        <label class="check"><input type="checkbox" id="cam-agree"> I agree to share photos with the ambulance crew and hospital. They are deleted automatically after 30 days.</label>
+        <div class="btn-row">
+          <button class="btn btn-primary" type="button" id="cam-start" disabled>Turn on camera</button>
+          <button class="btn btn-ghost" type="button" id="cam-cancel">Not now</button>
+        </div>
+        <label class="cam-file hidden" id="cam-file-wrap">
+          <span class="btn">Choose or take a photo</span>
+          <input type="file" id="cam-file" accept="image/*" capture="environment" class="sr-only">
+        </label>
+      </div>
+
+      <div id="cam-live" class="cam-live hidden">
+        <div class="cam-frame">
+          <video id="cam-video" autoplay playsinline muted></video>
+          <span class="cam-on" aria-live="polite">Camera on</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" type="button" id="cam-capture">Capture</button>
+          <button class="btn btn-danger" type="button" id="cam-stop">Stop camera</button>
+        </div>
+      </div>
+
+      <div id="cam-review" class="cam-review hidden">
+        <img id="cam-still" alt="Photo you just took">
+        <div class="btn-row">
+          <button class="btn btn-ok" type="button" id="cam-send">Send photo</button>
+          <button class="btn" type="button" id="cam-retake">Retake</button>
+          <button class="btn btn-ghost" type="button" id="cam-discard">Discard</button>
+        </div>
+      </div>
+      <p class="civ-fine" id="cam-count"></p>
+    </section>
+
+    <div class="civ-footer-actions">
+      <a class="btn btn-danger btn-block" href="tel:{{ EMERGENCY_NUMBER }}">Call {{ EMERGENCY_NUMBER }}</a>
+      <button class="btn btn-ghost btn-block" type="button" id="cancel-report">Cancel my report</button>
+      <button class="btn btn-ghost btn-block hidden" type="button" id="new-report">Start a new report</button>
+    </div>
+  </section>
+</main>
+
+<script type="application/json" id="first-aid-data">{{ first_aid|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/gps.js') }}"></script>
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script src="{{ url_for('static', filename='js/civilian.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "staff_base.html" %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{% endblock %}
+{% block context %}System administration{% endblock %}
+{% block shell %}
+<div class="adm">
+  <nav class="adm-nav" aria-label="Admin sections">
+    {% set ep = request.endpoint or "" %}
+    <a href="{{ url_for('admin.dashboard') }}" {% if ep == 'admin.dashboard' %}aria-current="page"{% endif %}>System health</a>
+    <a href="{{ url_for('admin.hospitals') }}" {% if ep.startswith('admin.hospital') %}aria-current="page"{% endif %}>Hospitals</a>
+    <a href="{{ url_for('admin.users') }}" {% if ep.startswith('admin.user') %}aria-current="page"{% endif %}>Staff accounts</a>
+    <a href="{{ url_for('admin.audit_log') }}" {% if ep.startswith('admin.audit') %}aria-current="page"{% endif %}>Audit log</a>
+  </nav>
+  <main class="adm-main">
+    {% include "_flashes.html" %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

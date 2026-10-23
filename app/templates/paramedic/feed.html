@@ -1,0 +1,67 @@
+{% extends "staff_base.html" %}
+{% block title %}Paramedic - {{ APP_NAME }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/paramedic.css') }}">{% endblock %}
+{% block context %}Paramedic{% endblock %}
+{% block live %}<span class="conn" data-conn data-state="connecting">Connecting</span>{% endblock %}
+{% block page_class %}pm{% endblock %}
+{% block content %}
+<div class="pm-wrap" data-page="feed">
+  <a class="btn btn-danger btn-block pm-new" href="{{ url_for('paramedic.new_case') }}">Start on-scene case</a>
+
+  <section class="pm-section" aria-labelledby="mine-title">
+    <div class="pm-section-head">
+      <h2 id="mine-title">My active cases</h2>
+      <span class="muted">{{ my_cases|length }}</span>
+    </div>
+    {% if my_cases %}
+    <ul class="case-list">
+      {% for e in my_cases %}
+      <li>
+        <a class="case-card rail" data-sev="{{ (e.severity or 'none')|lower }}" href="{{ url_for('paramedic.case', case_id=e.id) }}">
+          <span class="case-top">
+            <strong>{{ e.situation_label }}</strong>
+            <span class="sev {{ e.severity|sevclass }}">{{ e.severity or "UNTRIAGED" }}</span>
+          </span>
+          <span class="case-meta">
+            <span class="figure">{{ e.reference }}</span>
+            <span class="status status-{{ e.status }}">{{ e.status_label }}</span>
+            <span data-ago="{{ e.created_at.isoformat() }}Z">{{ e.created_at|ago }}</span>
+            {% if e.hospital %}<span>To {{ e.hospital.name }}</span>{% endif %}
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">No active cases. Claim a bystander report below or start an on-scene case.</p>
+    {% endif %}
+  </section>
+
+  <section class="pm-section" aria-labelledby="feed-title">
+    <div class="pm-section-head">
+      <h2 id="feed-title">Bystander reports</h2>
+      <span class="muted" id="feed-loc">Distances need your location</span>
+    </div>
+    <ul class="case-list" id="feed-list" aria-live="polite">
+      <li class="empty">Loading reports...</li>
+    </ul>
+  </section>
+
+  <section class="pm-section" aria-labelledby="cap-title">
+    <details class="cap-board">
+      <summary><h2 id="cap-title">Hospital capacity</h2><span class="muted">tap to show</span></summary>
+      <div class="table-wrap">
+        <table class="data" id="cap-table">
+          <thead><tr><th>Hospital</th><th class="num">ER</th><th class="num">ICU</th><th>Updated</th></tr></thead>
+          <tbody><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+<script src="{{ url_for('static', filename='js/paramedic.js') }}"></script>
+{% endblock %}

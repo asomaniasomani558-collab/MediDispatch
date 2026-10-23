@@ -1,0 +1,46 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Hospitals - {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="adm-title">
+  <h1>Hospitals</h1>
+  <a class="btn btn-primary" href="{{ url_for('admin.hospital_new') }}">Add hospital</a>
+</div>
+<section class="panel">
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>Code</th><th>Name</th><th>Region</th><th>Level</th>
+          <th class="num">ER free / total</th><th class="num">ICU free / total</th>
+          <th>Specialists on duty</th><th>Updated</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in hospitals %}
+        <tr>
+          <td class="figure">{{ h.code }}</td>
+          <td>{{ h.name }}</td>
+          <td>{{ h.region }}</td>
+          <td>{{ h.level }}</td>
+          <td class="num{% if h.er_beds_available <= 0 %} zero{% endif %}">{{ h.er_beds_available }} / {{ h.er_beds_total }}</td>
+          <td class="num{% if h.icu_beds_available <= 0 %} zero{% endif %}">{{ h.icu_beds_available }} / {{ h.icu_beds_total }}</td>
+          <td>{{ (h.specialists or {}).values()|select|list|length }}</td>
+          <td class="muted nowrap">{{ h.capacity_updated_at|ago }}</td>
+          <td>{% if h.is_active %}<span class="status status-acknowledged">Active</span>{% else %}<span class="status">Inactive</span>{% endif %}</td>
+          <td class="row-actions">
+            <a class="btn btn-small" href="{{ url_for('admin.hospital_edit', hospital_id=h.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('admin.hospital_delete', hospital_id=h.id) }}"
+                  data-confirm="Delete {{ h.name }}? If it has cases or staff it will be deactivated instead.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-small btn-ghost" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" class="empty">No hospitals yet. Add one, or run scripts/seed_data.py.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

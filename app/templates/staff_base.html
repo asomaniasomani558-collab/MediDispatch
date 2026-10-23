@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block body %}
+<header class="topbar">
+  <a class="brand" href="{{ url_for('index') }}">
+    <img src="{{ url_for('static', filename='img/mark-red.png') }}" alt="" width="30" height="30">
+    <span class="brand-name">MediDispatch <span>GH</span></span>
+  </a>
+  <span class="topbar-context">{% block context %}{% endblock %}</span>
+  <span class="topbar-spacer"></span>
+  {% block live %}{% endblock %}
+  <span class="clock" data-clock aria-label="Current time">--:--:--</span>
+  {% if current_user.is_authenticated %}
+  <span class="topbar-user">{{ current_user.full_name }}<small>{{ current_user.role_label }}{% if current_user.hospital %} - {{ current_user.hospital.code }}{% endif %}</small></span>
+  <form method="post" action="{{ url_for('auth.logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-ghost btn-small" type="submit">Sign out</button>
+  </form>
+  {% endif %}
+</header>
+{% block shell %}
+<main class="page {% block page_class %}{% endblock %}">
+  {% include "_flashes.html" %}
+  {% block content %}{% endblock %}
+</main>
+{% endblock %}
+{% endblock %}

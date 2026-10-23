@@ -1,0 +1,61 @@
+{% extends "admin/_layout.html" %}
+{% block title %}{{ "Edit " ~ h.name if h.id else "Add hospital" }} - {{ APP_NAME }}{% endblock %}
+{% macro err(name) %}{% if errors.get(name) %}<span class="field-error">{{ errors[name] }}</span>{% endif %}{% endmacro %}
+{% macro inv(name) %}{% if errors.get(name) %}aria-invalid="true"{% endif %}{% endmacro %}
+{% block content %}
+<div class="adm-title">
+  <h1>{{ "Edit " ~ h.name if h.id else "Add hospital" }}</h1>
+  <a class="btn btn-ghost" href="{{ url_for('admin.hospitals') }}">Back to list</a>
+</div>
+<form method="post" class="panel adm-form" novalidate>
+  <div class="panel-body">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <fieldset class="fieldset">
+      <legend>Identity</legend>
+      <div class="form-grid">
+        <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" value="{{ h.name or '' }}" required {{ inv('name') }}>{{ err('name') }}</div>
+        <div class="field"><label for="f-code">Code</label><input id="f-code" name="code" value="{{ h.code or '' }}" maxlength="16" required {{ inv('code') }}>{{ err('code') }}<span class="field-hint">Short ID, e.g. KATH</span></div>
+        <div class="field"><label for="f-region">Region</label>
+          <select id="f-region" name="region" {{ inv('region') }}>
+            <option value="">Choose...</option>
+            {% for r in regions %}<option {% if h.region == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+          </select>{{ err('region') }}</div>
+        <div class="field"><label for="f-district">District</label><input id="f-district" name="district" value="{{ h.district or '' }}"></div>
+        <div class="field"><label for="f-level">Level</label>
+          <select id="f-level" name="level" {{ inv('level') }}>
+            {% for l in levels %}<option {% if h.level == l %}selected{% endif %}>{{ l }}</option>{% endfor %}
+          </select>{{ err('level') }}</div>
+        <div class="field"><label for="f-phone">Emergency phone</label><input id="f-phone" name="phone" type="tel" value="{{ h.phone or '' }}"></div>
+        <div class="field"><label for="f-lat">Latitude</label><input id="f-lat" name="latitude" type="number" step="0.000001" value="{{ h.latitude if h.latitude is not none else '' }}" {{ inv('latitude') }}>{{ err('latitude') }}</div>
+        <div class="field"><label for="f-lon">Longitude</label><input id="f-lon" name="longitude" type="number" step="0.000001" value="{{ h.longitude if h.longitude is not none else '' }}" {{ inv('longitude') }}>{{ err('longitude') }}</div>
+      </div>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend>Beds</legend>
+      <div class="form-grid">
+        {% for key, label in [("er_beds_total","ER beds - total"),("er_beds_available","ER beds - free"),("icu_beds_total","ICU beds - total"),("icu_beds_available","ICU beds - free"),("general_beds_available","Ward beds - free")] %}
+        <div class="field"><label for="f-{{ key }}">{{ label }}</label><input id="f-{{ key }}" name="{{ key }}" type="number" min="0" value="{{ h[key] if h[key] is not none else 0 }}" {{ inv(key) }}>{{ err(key) }}</div>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div class="adm-cols">
+      <fieldset class="fieldset">
+        <legend>Specialists on duty</legend>
+        {% for key, label in specialists.items() %}
+        <label class="check"><input type="checkbox" name="spec_{{ key }}" {% if (h.specialists or {}).get(key) %}checked{% endif %}> {{ label }}</label>
+        {% endfor %}
+      </fieldset>
+      <fieldset class="fieldset">
+        <legend>Facilities</legend>
+        {% for key, label in facilities.items() %}
+        <label class="check"><input type="checkbox" name="fac_{{ key }}" {% if (h.facilities or {}).get(key) %}checked{% endif %}> {{ label }}</label>
+        {% endfor %}
+        <label class="check adm-active"><input type="checkbox" name="is_active" {% if h.is_active %}checked{% endif %}> Active - receives patients and appears in matching</label>
+      </fieldset>
+    </div>
+    <button class="btn btn-primary" type="submit">{{ "Save changes" if h.id else "Add hospital" }}</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Audit log - {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="adm-title">
+  <h1>Audit log</h1>
+  <form method="post" action="{{ url_for('admin.audit_verify') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn" type="submit">Verify integrity</button>
+  </form>
+</div>
+<p class="panel-note adm-lede">Append-only record of every access to patient data and every administrative change. Entries cannot be edited or deleted, and each is hash-chained to the one before it, so tampering is detectable.</p>
+
+<form class="panel audit-filter" method="get">
+  <div class="panel-body form-grid">
+    <div class="field"><label for="a-user">Username</label><input id="a-user" name="user" value="{{ filters.user }}"></div>
+    <div class="field"><label for="a-action">Action</label>
+      <select id="a-action" name="action"><option value="">Any</option>
+        {% for a in actions %}<option {% if filters.action == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="a-ref">Case reference</label><input id="a-ref" name="ref" value="{{ filters.ref }}" placeholder="MD-261022-ABC123"></div>
+    <div class="field"><label for="a-day">Date</label><input id="a-day" name="day" type="date" value="{{ filters.day }}"></div>
+    <div class="field audit-go"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-ghost" href="{{ url_for('admin.audit_log') }}">Clear</a></div>
+  </div>
+</form>
+
+<section class="panel">
+  <div class="table-wrap">
+    <table class="data audit-table">
+      <thead><tr><th class="num">#</th><th>Time (UTC)</th><th>User</th><th>Role</th><th>Action</th><th>Case</th><th>Resource</th><th>Detail</th><th>IP</th><th>Hash</th></tr></thead>
+      <tbody>
+        {% for a in page.items %}
+        <tr>
+          <td class="num">{{ a.id }}</td>
+          <td class="nowrap">{{ a.created_at|dt("%Y-%m-%d %H:%M:%S") }}</td>
+          <td>{{ a.username or "-" }}</td>
+          <td>{{ a.role or "-" }}</td>
+          <td><span class="act act-{{ 'view' if a.action.startswith('VIEW') else 'other' }}">{{ a.action }}</span></td>
+          <td class="figure nowrap">{% if a.emergency_reference %}<a href="{{ url_for('admin.audit_log', ref=a.emergency_reference) }}">{{ a.emergency_reference }}</a>{% else %}-{% endif %}</td>
+          <td>{{ a.resource or "" }}</td>
+          <td>{{ a.detail or "" }}</td>
+          <td class="nowrap">{{ a.ip_address or "" }}</td>
+          <td class="hash" title="{{ a.entry_hash }}">{{ a.entry_hash[:10] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" class="empty">No entries match these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pager">
+    <span class="muted">{{ page.total }} entries - page {{ page.page }} of {{ page.pages or 1 }}</span>
+    <span class="btn-row">
+      {% if page.has_prev %}<a class="btn btn-small" href="{{ url_for('admin.audit_log', page=page.prev_num, **filters) }}">Newer</a>{% endif %}
+      {% if page.has_next %}<a class="btn btn-small" href="{{ url_for('admin.audit_log', page=page.next_num, **filters) }}">Older</a>{% endif %}
+    </span>
+  </div>
+</section>
+{% endblock %}

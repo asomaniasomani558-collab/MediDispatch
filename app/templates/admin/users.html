@@ -1,0 +1,44 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Staff accounts - {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="adm-title">
+  <h1>Staff accounts</h1>
+  <a class="btn btn-primary" href="{{ url_for('admin.user_new') }}">Add account</a>
+</div>
+<section class="panel">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Hospital</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td class="figure">{{ u.username }}</td>
+          <td>{{ u.full_name }}</td>
+          <td>{{ roles[u.role] }}</td>
+          <td>{{ u.hospital.name if u.hospital else "-" }}</td>
+          <td class="muted nowrap">{{ u.last_login_at|ago }}</td>
+          <td>
+            {% if not u.is_enabled %}<span class="status">Disabled</span>
+            {% elif u.is_locked() %}<span class="status status-reported">Locked</span>
+            {% else %}<span class="status status-acknowledged">Active</span>{% endif %}
+          </td>
+          <td class="row-actions">
+            <a class="btn btn-small" href="{{ url_for('admin.user_edit', user_id=u.id) }}">Edit</a>
+            {% if u.id != current_user.id %}
+            <form method="post" action="{{ url_for('admin.user_toggle', user_id=u.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-small" type="submit">{{ "Disable" if u.is_enabled else "Enable" }}</button>
+            </form>
+            <form method="post" action="{{ url_for('admin.user_delete', user_id=u.id) }}" data-confirm="Delete {{ u.username }}? Accounts with case history are disabled instead.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-small btn-ghost" type="submit">Delete</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

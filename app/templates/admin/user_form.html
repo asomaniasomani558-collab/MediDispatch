@@ -1,0 +1,36 @@
+{% extends "admin/_layout.html" %}
+{% block title %}{{ "Add account" if is_new else "Edit " ~ u.username }} - {{ APP_NAME }}{% endblock %}
+{% macro err(name) %}{% if errors.get(name) %}<span class="field-error">{{ errors[name] }}</span>{% endif %}{% endmacro %}
+{% block content %}
+<div class="adm-title">
+  <h1>{{ "Add account" if is_new else "Edit " ~ u.username }}</h1>
+  <a class="btn btn-ghost" href="{{ url_for('admin.users') }}">Back to list</a>
+</div>
+<form method="post" class="panel adm-form adm-narrow" novalidate autocomplete="off">
+  <div class="panel-body">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if is_new %}
+    <div class="field"><label for="u-username">Username</label>
+      <input id="u-username" name="username" value="{{ u.username or '' }}" autocapitalize="none" spellcheck="false" required>
+      {{ err('username') }}<span class="field-hint">Lowercase letters, digits, dot, dash or underscore.</span></div>
+    {% endif %}
+    <div class="field"><label for="u-name">Full name</label><input id="u-name" name="full_name" value="{{ u.full_name or '' }}" required>{{ err('full_name') }}</div>
+    <div class="field"><label for="u-role">Role</label>
+      <select id="u-role" name="role">
+        {% for key, label in roles.items() %}<option value="{{ key }}" {% if u.role == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>{{ err('role') }}</div>
+    <div class="field"><label for="u-hospital">Hospital <span class="muted">(hospital staff only)</span></label>
+      <select id="u-hospital" name="hospital_id">
+        <option value="">None</option>
+        {% for h in hospitals %}<option value="{{ h.id }}" {% if u.hospital_id == h.id %}selected{% endif %}>{{ h.name }}</option>{% endfor %}
+      </select>{{ err('hospital_id') }}</div>
+    <fieldset class="fieldset">
+      <legend>{{ "Password" if is_new else "Reset password" }}</legend>
+      {% if not is_new %}<p class="field-hint">Leave blank to keep the current password. Changing it signs the user out everywhere.</p>{% endif %}
+      <div class="field"><label for="u-pw">New password</label><input id="u-pw" name="password" type="password" autocomplete="new-password" minlength="{{ min_len }}">{{ err('password') }}<span class="field-hint">At least {{ min_len }} characters.</span></div>
+      <div class="field"><label for="u-pw2">Confirm password</label><input id="u-pw2" name="password_confirm" type="password" autocomplete="new-password"></div>
+    </fieldset>
+    <button class="btn btn-primary" type="submit">{{ "Create account" if is_new else "Save changes" }}</button>
+  </div>
+</form>
+{% endblock %}

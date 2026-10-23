@@ -1,0 +1,156 @@
+/* Civilian PWA - big targets, one decision per screen, works one-handed. */
+
+body.civ { font-size: 17px; }
+
+.civ-bar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: var(--bg-deep); border-bottom: 1px solid var(--line);
+}
+.civ-brand {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-figure); font-size: 20px; font-weight: 700;
+}
+.civ-call {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px;
+  font-weight: 700; color: #fff; text-decoration: none;
+  background: var(--brand); border-radius: var(--radius-s);
+}
+.civ-call:hover { background: var(--brand-hi); color: #fff; }
+
+.civ-banner {
+  margin: 0; padding: 12px 16px; font-size: 15px;
+  background: #3b1a12; color: #ffd9c7; border-bottom: 2px solid var(--sev-high);
+}
+
+.civ-main {
+  width: min(560px, 100%); margin: 0 auto;
+  padding: 20px 16px calc(32px + env(safe-area-inset-bottom));
+}
+
+.screen h1 { font-size: 34px; margin-bottom: 6px; }
+.civ-lead { color: var(--text-dim); font-size: 17px; }
+.civ-fine { color: var(--muted); font-size: 14px; margin-top: 14px; }
+.civ-next { min-height: 56px; font-size: 18px; margin-top: 6px; }
+.civ-alt { display: flex; width: 100%; margin-top: 8px; }
+
+/* --- The button (the one bold moment) ---------------------------------------- */
+[data-screen="start"] { display: grid; justify-items: center; text-align: center; gap: 18px; padding-top: 6vh; }
+[data-screen="start"].hidden { display: none; }
+
+.help-btn {
+  position: relative;
+  width: min(74vw, 300px); aspect-ratio: 1;
+  border-radius: 50%;
+  border: 6px solid #ff8d91;
+  background: radial-gradient(circle at 50% 38%, #ff4148 0%, var(--brand) 55%, #b9141a 100%);
+  color: #fff; cursor: pointer;
+  display: grid; place-content: center; gap: 6px;
+  box-shadow: 0 18px 50px rgba(229, 38, 45, 0.45);
+  -webkit-tap-highlight-color: transparent;
+}
+.help-btn::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%;
+  border: 4px solid rgba(255, 77, 85, 0.7);
+  animation: pulse 2.2s ease-out infinite;
+  pointer-events: none;
+}
+.help-btn:active { transform: scale(0.97); }
+.help-btn:focus-visible { box-shadow: 0 0 0 6px rgba(95, 168, 255, 0.7), 0 18px 50px rgba(229, 38, 45, 0.45); }
+.help-btn-label { font-family: var(--font-figure); font-weight: 700; font-size: 58px; line-height: 0.95; }
+.help-btn-sub { font-size: 16px; color: #ffe1e2; }
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+/* --- Situations ----------------------------------------------------------------- */
+.sit-grid {
+  display: grid; gap: 10px; margin: 14px 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.sit {
+  min-height: 72px; padding: 10px 12px;
+  font: 700 17px/1.2 var(--font-body); text-align: left;
+  color: var(--text); background: var(--panel-2);
+  border: 2px solid var(--line-strong); border-radius: var(--radius-m);
+  cursor: pointer;
+}
+.sit:hover { border-color: var(--brand-hi); }
+.sit[data-situation="unconscious"], .sit[data-situation="breathing"],
+.sit[data-situation="bleeding"], .sit[data-situation="accident"] { border-color: #8a2c33; }
+
+/* --- Sending ----------------------------------------------------------------------- */
+.sending { display: grid; gap: 12px; text-align: center; padding-top: 10vh; }
+.spinner {
+  width: 54px; height: 54px; margin: 0 auto;
+  border: 5px solid var(--line-strong); border-top-color: var(--brand-hi); border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Status ------------------------------------------------------------------------ */
+.status-card {
+  padding: 16px; margin-bottom: 18px;
+  background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--sev-moderate);
+  border-radius: var(--radius-m);
+}
+.status-card[data-phase="assigned"] { border-left-color: var(--info); }
+.status-card[data-phase="transport"] { border-left-color: var(--ok); }
+.status-card[data-phase="closed"] { border-left-color: var(--sev-none); }
+.status-card h1 { font-size: 30px; }
+.status-ref { margin: 0 0 4px; color: var(--muted); font-size: 14px; }
+.status-ref strong { color: var(--text); font-size: 20px; letter-spacing: 0.04em; }
+
+.gps-line {
+  display: flex; align-items: center; gap: 8px; margin: 10px 0;
+  font-size: 15px; color: var(--muted);
+}
+.gps-line::before {
+  content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--sev-none); flex: none;
+}
+.gps-line[data-state="ok"] { color: var(--ok); }
+.gps-line[data-state="ok"]::before { background: var(--ok); }
+.gps-line[data-state="error"] { color: var(--sev-high); }
+.gps-line[data-state="error"]::before { background: var(--sev-high); }
+
+/* --- First aid ------------------------------------------------------------------------ */
+.aid h2, .cam h2 { font-size: 24px; }
+.aid-steps { margin: 0 0 14px; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 10px; }
+.aid-steps li {
+  counter-increment: step;
+  display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: start;
+  padding: 12px; background: var(--panel-2); border-radius: var(--radius-m); font-size: 18px; line-height: 1.4;
+}
+.aid-steps li::before {
+  content: counter(step);
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  font: 700 22px/1 var(--font-figure); color: #fff; background: var(--brand);
+}
+.aid-general { margin: 0 0 22px; padding-left: 20px; color: var(--text-dim); font-size: 15px; display: grid; gap: 6px; }
+
+/* --- Camera -------------------------------------------------------------------------- */
+.cam { padding: 16px; margin-bottom: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-m); }
+.cam-consent p { font-size: 15px; color: var(--text-dim); }
+.cam-consent .check { align-items: flex-start; font-size: 15px; margin-bottom: 10px; }
+.cam-consent .check input { margin-top: 2px; flex: none; }
+.cam-file { display: block; margin-top: 10px; cursor: pointer; }
+.cam-frame { position: relative; margin-bottom: 10px; border-radius: var(--radius-m); overflow: hidden; background: #000; }
+.cam-frame video { width: 100%; max-height: 60vh; display: block; object-fit: cover; }
+.cam-on {
+  position: absolute; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; font-size: 14px; font-weight: 700; color: #fff;
+  background: rgba(229, 38, 45, 0.9); border-radius: 999px;
+}
+.cam-on::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #fff; }
+.cam-review img { width: 100%; border-radius: var(--radius-m); margin-bottom: 10px; }
+
+.civ-footer-actions { display: grid; gap: 10px; }
+.civ-footer-actions .btn { min-height: 52px; }
+
+@media (min-width: 520px) {
+  .sit-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

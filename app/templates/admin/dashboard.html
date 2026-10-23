@@ -1,0 +1,103 @@
+{% extends "admin/_layout.html" %}
+{% block title %}System health - {{ APP_NAME }}{% endblock %}
+{% block live %}<span class="conn" data-conn data-state="connecting">Connecting</span>{% endblock %}
+{% block content %}
+<div data-page="admin-dashboard">
+  <div class="adm-title">
+    <h1>System health</h1>
+    <span class="panel-note">Refreshes every 10 seconds</span>
+  </div>
+
+  {% set ai = health.ai %}
+  <section class="tiles" aria-label="Service status" id="health-tiles">
+    <article class="tile" data-ok="{{ 'yes' if health.database.online else 'no' }}" id="t-db">
+      <h2>Database</h2>
+      <p class="tile-state">{{ "Online" if health.database.online else "DOWN" }}</p>
+      <p class="tile-meta">{{ health.database.dialect or "" }}{% if health.database.latency_ms is defined %} - {{ health.database.latency_ms }} ms{% endif %}</p>
+    </article>
+    <article class="tile" data-ok="{{ 'yes' if health.redis.online else ('na' if not health.redis.configured else 'no') }}" id="t-redis">
+      <h2>Redis</h2>
+      <p class="tile-state">{% if not health.redis.configured %}Not configured{% elif health.redis.online %}Online{% else %}DOWN{% endif %}</p>
+      <p class="tile-meta">{% if health.redis.configured %}Socket message queue{% else %}Single-process mode{% endif %}</p>
+    </article>
+    <article class="tile" data-ok="{{ 'yes' if ai.online and ai.model_available else ('warn' if ai.online else 'no') }}" id="t-ai">
+      <h2>AI model</h2>
+      <p class="tile-state">{% if ai.online and ai.model_available %}Online{% elif ai.online %}Model missing{% else %}Offline - MEWS fallback{% endif %}</p>
+      <p class="tile-meta">{{ ai.model }}{% if ai.availability_pct is not none %} - {{ ai.availability_pct }}% availability{% endif %}</p>
+    </article>
+    <article class="tile" data-ok="yes" id="t-ws">
+      <h2>Live connections</h2>
+      <p class="tile-state figure">{{ health.websockets.count }}</p>
+      <p class="tile-meta">WebSocket clients on this worker</p>
+    </article>
+  </section>
+
+  <section class="stats" aria-label="Operations">
+    <div class="stat"><span class="figure" id="s-open">{{ stats.open }}</span><small>Open cases</small></div>
+    <div class="stat"><span class="figure" id="s-unclaimed">{{ stats.unclaimed }}</span><small>Unclaimed reports</small></div>
+    {% for sev, n in stats.by_severity.items() %}
+    <div class="stat"><span class="figure sev-text-{{ sev|lower }}" id="s-{{ sev|lower }}">{{ n }}</span><small>{{ sev|title }}</small></div>
+    {% endfor %}
+    <div class="stat"><span class="figure" id="s-24h">{{ stats.last_24h }}</span><small>Reports, 24 h</small></div>
+    <div class="stat"><span class="figure" id="s-full">{{ stats.hospitals_full }}/{{ stats.hospitals_active }}</span><small>Hospitals with 0 ER beds</small></div>
+    <div class="stat"><span class="figure" id="s-photos">{{ stats.photos_stored }}</span><small>Photos stored</small></div>
+    <div class="stat"><span class="figure" id="s-audit">{{ stats.audit_entries }}</span><small>Audit entries</small></div>
+  </section>
+
+  <div class="adm-cols">
+    <section class="panel" aria-labelledby="ai-title">
+      <div class="panel-head"><h2 id="ai-title">AI harness</h2><span class="panel-note">Llama 3.2 3B via local Ollama</span></div>
+      <div class="panel-body">
+        <dl class="kv-wide" id="ai-detail">
+          <dt>Endpoint</dt><dd>{{ ai.url or "-" }}</dd>
+          <dt>Model</dt><dd>{{ ai.model }} {% if ai.model_available %}(pulled){% elif ai.online %}(run: ollama pull {{ ai.model }}){% endif %}</dd>
+          <dt>Up since</dt><dd data-epoch="{{ ai.up_since or '' }}">{{ "-" if not ai.up_since else "" }}</dd>
+          <dt>Circuit breaker</dt><dd>{{ "OPEN - AI skipped, MEWS only" if ai.circuit_open else "Closed (normal)" }}</dd>
+          <dt>Last error</dt><dd>{{ ai.last_error or "None" }}</dd>
+        </dl>
+        <p class="panel-note">If the model is offline, triage continues on MEWS rules with no delay. The AI can raise severity but never lower it.</p>
+        <p class="panel-note">Built with Llama. Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright &copy; Meta Platforms, Inc. All Rights Reserved.</p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="ws-title">
+      <div class="panel-head"><h2 id="ws-title">Active WebSocket clients</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>User</th><th>Role</th><th>Hospital</th><th>Connected</th><th>IP</th></tr></thead>
+          <tbody id="ws-body">
+            {% for c in health.websockets.clients %}
+            <tr><td>{{ c.username }}</td><td>{{ c.role }}</td><td>{{ c.hospital_id or "-" }}</td><td data-epoch-ago="{{ c.connected_at }}"></td><td>{{ c.ip }}</td></tr>
+            {% else %}
+            <tr><td colspan="5" class="empty">No live clients.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="log-title">
+    <div class="panel-head">
+      <h2 id="log-title">System logs</h2>
+      <label class="log-filter">Level
+        <select id="log-level">
+          <option>INFO</option><option>WARNING</option><option>ERROR</option>
+        </select>
+      </label>
+    </div>
+    <div class="logs" id="logs" role="log">
+      {% for l in logs %}
+      <div class="log log-{{ l.level|lower }}"><time data-epoch-time="{{ l.time }}"></time><b>{{ l.level }}</b><span>{{ l.logger }}</span><p>{{ l.message }}</p></div>
+      {% else %}
+      <p class="empty">No log entries yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

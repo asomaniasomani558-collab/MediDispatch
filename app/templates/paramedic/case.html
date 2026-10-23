@@ -1,0 +1,151 @@
+{% extends "staff_base.html" %}
+{% block title %}{{ e.reference }} - {{ APP_NAME }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/paramedic.css') }}">{% endblock %}
+{% block context %}Paramedic{% endblock %}
+{% block live %}<span class="conn" data-conn data-state="connecting">Connecting</span>{% endblock %}
+{% block page_class %}pm{% endblock %}
+{% block content %}
+{% set v = e.vitals or {} %}
+<div class="pm-wrap pm-case" data-page="case" data-case-id="{{ e.id }}" data-case-open="{{ 'yes' if e.is_open else 'no' }}">
+  <a class="pm-back" href="{{ url_for('paramedic.feed') }}">Back to feed</a>
+
+  <header class="case-head rail" data-sev="{{ (e.severity or 'none')|lower }}" id="case-head">
+    <div>
+      <h1>{{ e.situation_label }}</h1>
+      <p class="case-meta">
+        <span class="figure">{{ e.reference }}</span>
+        <span class="status status-{{ e.status }}" id="case-status">{{ e.status_label }}</span>
+        <span>{{ "Bystander report" if e.source == "civilian" else "On-scene case" }}</span>
+        <span data-ago="{{ e.created_at.isoformat() }}Z">{{ e.created_at|ago }}</span>
+      </p>
+    </div>
+    <span class="sev {{ e.severity|sevclass }} sev-large" id="case-sev">{{ e.severity or "UNTRIAGED" }}</span>
+  </header>
+
+  <div class="case-grid">
+    <!-- Contact & location -->
+    <section class="panel" aria-labelledby="contact-title">
+      <div class="panel-head"><h2 id="contact-title">Contact &amp; location</h2></div>
+      <div class="panel-body">
+        <dl class="kv">
+          <dt>Name</dt><dd>{{ e.reporter_name or "Not given" }}</dd>
+          <dt>Phone</dt>
+          <dd>{% if e.reporter_phone %}<a class="btn btn-small" href="tel:{{ e.reporter_phone }}">Call {{ e.reporter_phone }}</a>{% else %}Not given{% endif %}</dd>
+          <dt>GPS</dt>
+          <dd>
+            {% if e.lat is not none %}
+              <span class="figure">{{ "%.5f"|format(e.lat) }}, {{ "%.5f"|format(e.lon) }}</span>
+              {% if e.location.acc %}<span class="muted">(about {{ e.location.acc }} m)</span>{% endif %}
+              <br><span class="muted">Updated <span data-ago="{{ e.location_updated_at.isoformat() if e.location_updated_at else '' }}Z">{{ e.location_updated_at|ago }}</span></span>
+              <div class="btn-row pm-maplinks">
+                <a class="btn btn-small" href="https://www.google.com/maps/dir/?api=1&amp;destination={{ e.lat }},{{ e.lon }}" target="_blank" rel="noopener noreferrer">Navigate</a>
+                <a class="btn btn-small btn-ghost" href="geo:{{ e.lat }},{{ e.lon }}?q={{ e.lat }},{{ e.lon }}">Open in maps app</a>
+              </div>
+            {% else %}
+              <span class="tag tag-missing">No GPS - call the reporter for directions</span>
+            {% endif %}
+          </dd>
+        </dl>
+        {% set photos = e.live_media() %}
+        {% if photos %}
+        <h3>Bystander photos</h3>
+        <div class="photos">
+          {% for m in photos %}
+          <a href="{{ url_for('api.media', media_id=m.id) }}" target="_blank" rel="noopener">
+            <img src="{{ url_for('api.media', media_id=m.id) }}" alt="Photo {{ loop.index }} from bystander" loading="lazy">
+          </a>
+          {% endfor %}
+        </div>
+        <p class="panel-note">Photos are deleted automatically 30 days after upload.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Vitals -->
+    <section class="panel" aria-labelledby="vitals-title">
+      <div class="panel-head"><h2 id="vitals-title">Vitals</h2><span class="panel-note">MEWS uses RR, HR, SBP, Temp, AVPU</span></div>
+      <form class="panel-body" id="vitals-form" novalidate>
+        <div class="vitals-grid">
+          {% macro vital(name, label, unit, step="1", mews=false) %}
+          <div class="field vital{% if mews %} vital-mews{% endif %}">
+            <label for="v-{{ name }}">{{ label }}</label>
+            <div class="vital-input">
+              <input id="v-{{ name }}" name="{{ name }}" type="number" inputmode="decimal" step="{{ step }}"
+                     value="{{ (e.vitals or {}).get(name) if (e.vitals or {}).get(name) is not none else '' }}">
+              <span class="unit">{{ unit }}</span>
+            </div>
+            <span class="field-error" data-error-for="{{ name }}"></span>
+          </div>
+          {% endmacro %}
+          {{ vital("respiratory_rate", "Resp. rate", "/min", mews=true) }}
+          {{ vital("heart_rate", "Heart rate", "bpm", mews=true) }}
+          {{ vital("systolic_bp", "Systolic BP", "mmHg", mews=true) }}
+          {{ vital("diastolic_bp", "Diastolic BP", "mmHg") }}
+          {{ vital("temperature", "Temperature", "°C", step="0.1", mews=true) }}
+          {{ vital("spo2", "SpO2", "%") }}
+          {{ vital("gcs", "GCS", "3-15") }}
+          {{ vital("glucose", "Glucose", "mmol/L", step="0.1") }}
+          {{ vital("age", "Age", "yrs") }}
+        </div>
+
+        <fieldset class="avpu">
+          <legend>Consciousness (AVPU)</legend>
+          {% for code, label in [("A","Alert"),("V","Voice"),("P","Pain"),("U","Unresponsive")] %}
+          <label class="avpu-opt"><input type="radio" name="avpu" value="{{ code }}" {% if v.get('avpu') == code %}checked{% endif %}><span><strong>{{ code }}</strong> {{ label }}</span></label>
+          {% endfor %}
+          <span class="field-error" data-error-for="avpu"></span>
+        </fieldset>
+
+        <fieldset class="avpu sex">
+          <legend>Sex</legend>
+          {% for code, label in [("M","Male"),("F","Female")] %}
+          <label class="avpu-opt"><input type="radio" name="sex" value="{{ code }}" {% if v.get('sex') == code %}checked{% endif %}><span>{{ label }}</span></label>
+          {% endfor %}
+        </fieldset>
+
+        <div class="field">
+          <label for="v-symptoms">Symptoms, mechanism, history</label>
+          <textarea id="v-symptoms" name="symptoms" maxlength="2000" placeholder="e.g. motorbike vs car, 40 km/h, no helmet, confused, laceration left forearm">{{ e.symptoms or "" }}</textarea>
+        </div>
+        <button class="btn btn-primary btn-block pm-triage-btn" type="submit" id="triage-btn">Run triage</button>
+      </form>
+    </section>
+
+    <!-- Triage result -->
+    <section class="panel" aria-labelledby="triage-title" id="triage-panel">
+      <div class="panel-head"><h2 id="triage-title">Triage</h2><span class="panel-note" id="ai-line"></span></div>
+      <div class="panel-body" id="triage-body">
+        <p class="empty">Enter vitals and run triage. The MEWS score is the baseline; the AI can only raise it.</p>
+      </div>
+    </section>
+
+    <!-- Hospital matching -->
+    <section class="panel" aria-labelledby="match-title" id="match-panel">
+      <div class="panel-head">
+        <h2 id="match-title">Receiving hospital</h2>
+        <span class="panel-note">{% if e.hospital %}Assigned: <strong id="assigned-name">{{ e.hospital.name }}</strong>{% else %}<span id="assigned-name">Not assigned</span>{% endif %}</span>
+      </div>
+      <div class="panel-body" id="match-body">
+        <p class="empty">Hospital suggestions appear after triage.</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel pm-actions" aria-label="Case actions">
+    <div class="panel-body btn-row">
+      {% if e.source == "civilian" and e.status == "claimed" %}
+      <button class="btn" type="button" data-action="release">Release back to feed</button>
+      {% endif %}
+      <button class="btn btn-ok" type="button" data-action="arrived">Patient handed over</button>
+      <button class="btn" type="button" data-action="resolved">Close case (no transport)</button>
+      <button class="btn btn-ghost" type="button" data-action="cancelled">Cancel - false alarm</button>
+    </div>
+  </section>
+</div>
+<script type="application/json" id="triage-data">{{ (e.triage or {})|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+<script src="{{ url_for('static', filename='js/paramedic.js') }}"></script>
+{% endblock %}

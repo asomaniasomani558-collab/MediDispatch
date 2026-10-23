@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ APP_NAME }}{% endblock %}
+{% block body %}
+<main class="center-stage">
+  <div>
+    <div class="auth-logo">
+      <img src="{{ url_for('static', filename='img/mark-red.png') }}" alt="" width="52" height="52">
+      <div>
+        <h1>MediDispatch GH</h1>
+        <p class="muted">Emergency medical dispatch for Ghana</p>
+      </div>
+    </div>
+    <nav class="portal-grid" aria-label="Choose your app">
+      <a class="portal portal-civilian" href="{{ url_for('civilian.index') }}">
+        <strong>I need emergency help</strong>
+        <span>Report an emergency and share your location. No account needed.</span>
+      </a>
+      <a class="portal" href="{{ url_for('paramedic.feed') }}">
+        <strong>Paramedics</strong>
+        <span>Claim reports, record vitals, triage and hand over.</span>
+      </a>
+      <a class="portal" href="{{ url_for('hospital.dashboard') }}">
+        <strong>Hospitals</strong>
+        <span>Inbound queue and live bed capacity.</span>
+      </a>
+      <a class="portal" href="{{ url_for('admin.dashboard') }}">
+        <strong>System admin</strong>
+        <span>Hospitals, staff accounts, health and audit.</span>
+      </a>
+    </nav>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Sign in - {{ APP_NAME }}{% endblock %}
+{% block body %}
+<main class="center-stage">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="{{ url_for('static', filename='img/mark-red.png') }}" alt="" width="52" height="52">
+      <div>
+        <h1>Staff sign in</h1>
+        <p class="muted">Paramedics, hospital staff and administrators</p>
+      </div>
+    </div>
+    {% include "_flashes.html" %}
+    <form class="panel" method="post" autocomplete="on">
+      <div class="panel-body">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" value="{{ username }}" required
+                 autocapitalize="none" autocomplete="username" spellcheck="false" maxlength="64" autofocus>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" required autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+      </div>
+    </form>
+    <p class="muted panel-note">Bystander? You don't need an account - <a href="{{ url_for('civilian.index') }}">report an emergency here</a> or call {{ EMERGENCY_NUMBER }}.</p>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,76 @@
+/* Hospital command centre - dense three-column desktop layout. */
+
+.hq {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) 420px;
+  grid-template-areas: "side queue detail";
+  gap: 12px;
+  padding: 12px;
+  height: calc(100vh - 6px - 55px);
+  min-height: 600px;
+}
+.hq > * { min-width: 0; }
+.hq > .flashes { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 60; }
+.hq-side { grid-area: side; display: grid; gap: 12px; align-content: start; overflow-y: auto; }
+.hq-queue { grid-area: queue; display: flex; flex-direction: column; min-height: 0; }
+.hq-queue .table-wrap { flex: 1; overflow: auto; }
+.hq-detail { grid-area: detail; overflow-y: auto; }
+
+/* Capacity */
+.cap-row { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 2px 8px; margin-bottom: 10px; }
+.cap-row label { grid-column: 1 / -1; font-size: 13px; font-weight: 700; color: var(--text-dim); }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper input {
+  width: 80px; text-align: center; font-family: var(--font-figure); font-size: 26px; font-weight: 700;
+  padding: 2px 4px; min-height: 40px; font-variant-numeric: tabular-nums;
+}
+.stepper .btn { min-width: 38px; min-height: 40px; font-size: 20px; padding: 0; }
+.cap-total { align-self: center; font-size: 13px; color: var(--muted); }
+.stepper input[data-zero="yes"] { color: var(--sev-critical); border-color: var(--sev-critical); }
+.spec-set { border: 0; padding: 0; margin: 4px 0 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 6px; }
+.spec-set legend { font-size: 13px; font-weight: 700; color: var(--text-dim); padding: 0; margin-bottom: 4px; }
+.spec-set .check { font-size: 13px; padding: 3px 0; }
+
+.near-list { list-style: none; margin: 0; padding: 0; }
+.near-list li:not(.empty) {
+  display: flex; justify-content: space-between; gap: 8px;
+  padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 14px;
+}
+.near-list .figure { font-size: 18px; }
+
+/* Queue */
+.queue-counts { display: flex; gap: 6px; }
+.queue-counts .sev { min-width: 0; }
+.queue-table tbody tr { cursor: pointer; }
+.queue-table tbody tr[aria-selected="true"] td { background: rgba(95, 168, 255, 0.12); }
+.queue-table tbody tr.fresh td { animation: arrive 1.6s ease-out 1; }
+@keyframes arrive { from { background: rgba(255, 77, 85, 0.35); } to { background: transparent; } }
+.queue-table td.num.mews { font-size: 22px; font-weight: 700; }
+.queue-table .ref { font-family: var(--font-figure); font-size: 15px; letter-spacing: 0.03em; white-space: nowrap; }
+
+/* Detail */
+.d-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.d-head h3 { font-size: 22px; margin: 0 0 4px; }
+.d-section { padding: 10px 0; border-top: 1px solid var(--line); }
+.d-section h4 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 700; }
+.vitals-table { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.vt { padding: 6px 8px; background: var(--panel-2); border-radius: var(--radius-s); }
+.vt small { display: block; font-size: 11px; color: var(--muted); }
+.vt b { font-family: var(--font-figure); font-size: 22px; font-variant-numeric: tabular-nums; }
+.vt[data-pts="1"] b { color: var(--sev-moderate); }
+.vt[data-pts="2"] b { color: var(--sev-high); }
+.vt[data-pts="3"] b { color: var(--sev-critical); }
+.d-actions { display: grid; gap: 6px; margin-top: 12px; }
+.d-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.d-photos img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-s); border: 1px solid var(--line); }
+.d-list { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
+.timeline { list-style: none; margin: 0; padding: 0; font-size: 13px; color: var(--text-dim); display: grid; gap: 2px; }
+.timeline span { display: inline-block; width: 92px; color: var(--muted); }
+
+@media (max-width: 1280px) {
+  .hq { grid-template-columns: 280px minmax(0, 1fr); grid-template-areas: "side queue" "side detail"; height: auto; }
+  .hq-detail { max-height: none; }
+}
+@media (max-width: 860px) {
+  .hq { grid-template-columns: 1fr; grid-template-areas: "queue" "detail" "side"; }
+}

@@ -1,0 +1,39 @@
+{% extends "staff_base.html" %}
+{% block title %}New case - {{ APP_NAME }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/paramedic.css') }}">{% endblock %}
+{% block context %}Paramedic{% endblock %}
+{% block page_class %}pm{% endblock %}
+{% block content %}
+<div class="pm-wrap" data-page="new">
+  <a class="pm-back" href="{{ url_for('paramedic.feed') }}">Back to feed</a>
+  <h1>Start on-scene case</h1>
+  <form method="post" class="panel" id="new-case-form">
+    <div class="panel-body">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="lat" id="nc-lat">
+      <input type="hidden" name="lon" id="nc-lon">
+      <input type="hidden" name="acc" id="nc-acc">
+      <div class="field">
+        <label for="nc-situation">Situation</label>
+        <select id="nc-situation" name="situation" required>
+          <option value="">Choose...</option>
+          {% for key, label in SITUATIONS.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="nc-name">Patient / contact name <span class="muted">(optional)</span></label>
+          <input id="nc-name" name="name" type="text" maxlength="80">
+        </div>
+        <div class="field">
+          <label for="nc-phone">Contact phone <span class="muted">(optional)</span></label>
+          <input id="nc-phone" name="phone" type="tel" inputmode="tel" maxlength="20">
+        </div>
+      </div>
+      <p class="gps-pill" id="nc-gps" data-state="">Getting scene location from this device...</p>
+      <button class="btn btn-primary btn-block" type="submit">Create case and record vitals</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/paramedic.js') }}"></script>{% endblock %}

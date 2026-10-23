@@ -1,0 +1,96 @@
+{% extends "staff_base.html" %}
+{% block title %}{{ hospital.code }} Command - {{ APP_NAME }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/hospital.css') }}">{% endblock %}
+{% block context %}{{ hospital.name }}{% endblock %}
+{% block live %}<span class="conn" data-conn data-state="connecting">Connecting</span>{% endblock %}
+{% block shell %}
+<main class="hq" data-hospital-id="{{ hospital.id }}">
+  {% include "_flashes.html" %}
+
+  <!-- Left: capacity -->
+  <aside class="hq-side">
+    <section class="panel" aria-labelledby="cap-title">
+      <div class="panel-head">
+        <h2 id="cap-title">Capacity</h2>
+        <span class="panel-note" id="cap-updated">{% if hospital.capacity_updated_at %}Updated <span data-ago="{{ hospital.capacity_updated_at.isoformat() }}Z">{{ hospital.capacity_updated_at|ago }}</span>{% else %}Never updated{% endif %}</span>
+      </div>
+      <form class="panel-body" id="cap-form" novalidate>
+        <div class="cap-row">
+          <label for="c-er">ER beds free</label>
+          <div class="stepper">
+            <button type="button" class="btn btn-small" data-step="-1" data-for="c-er" aria-label="One fewer ER bed">-</button>
+            <input id="c-er" name="er_beds_available" type="number" min="0" max="{{ hospital.er_beds_total }}" value="{{ hospital.er_beds_available }}">
+            <button type="button" class="btn btn-small" data-step="1" data-for="c-er" aria-label="One more ER bed">+</button>
+          </div>
+          <span class="cap-total">of {{ hospital.er_beds_total }}</span>
+        </div>
+        <div class="cap-row">
+          <label for="c-icu">ICU beds free</label>
+          <div class="stepper">
+            <button type="button" class="btn btn-small" data-step="-1" data-for="c-icu" aria-label="One fewer ICU bed">-</button>
+            <input id="c-icu" name="icu_beds_available" type="number" min="0" max="{{ hospital.icu_beds_total }}" value="{{ hospital.icu_beds_available }}">
+            <button type="button" class="btn btn-small" data-step="1" data-for="c-icu" aria-label="One more ICU bed">+</button>
+          </div>
+          <span class="cap-total">of {{ hospital.icu_beds_total }}</span>
+        </div>
+        <div class="cap-row">
+          <label for="c-gen">Ward beds free</label>
+          <div class="stepper">
+            <button type="button" class="btn btn-small" data-step="-1" data-for="c-gen" aria-label="One fewer ward bed">-</button>
+            <input id="c-gen" name="general_beds_available" type="number" min="0" value="{{ hospital.general_beds_available }}">
+            <button type="button" class="btn btn-small" data-step="1" data-for="c-gen" aria-label="One more ward bed">+</button>
+          </div>
+          <span class="cap-total"></span>
+        </div>
+        <fieldset class="spec-set">
+          <legend>Specialists on duty now</legend>
+          {% for key, label in specialists.items() %}
+          <label class="check"><input type="checkbox" name="spec" value="{{ key }}" {% if hospital.specialist_on(key) %}checked{% endif %}> {{ label }}</label>
+          {% endfor %}
+        </fieldset>
+        <p class="panel-note">Facilities:
+          {% for key, label in facilities.items() if hospital.facility_on(key) %}<span class="tag">{{ label }}</span>{% else %}none recorded{% endfor %}
+        </p>
+        <button class="btn btn-primary btn-block" type="submit">Publish capacity</button>
+      </form>
+    </section>
+
+    <section class="panel" aria-labelledby="near-title">
+      <div class="panel-head"><h2 id="near-title">Unassigned nearby</h2><span class="panel-note">no personal data</span></div>
+      <ul class="near-list" id="near-list"><li class="empty">Loading...</li></ul>
+    </section>
+  </aside>
+
+  <!-- Centre: queue -->
+  <section class="panel hq-queue" aria-labelledby="queue-title">
+    <div class="panel-head">
+      <h2 id="queue-title">Inbound patients</h2>
+      <span class="queue-counts" id="queue-counts"></span>
+    </div>
+    <div class="table-wrap">
+      <table class="data queue-table">
+        <thead>
+          <tr>
+            <th>Severity</th><th class="num">MEWS</th><th>Reference</th><th>Situation</th>
+            <th>Reporter</th><th>Phone</th><th>Status</th><th>Sent</th><th class="num">Photos</th>
+          </tr>
+        </thead>
+        <tbody id="queue-body"><tr><td colspan="9" class="empty">Loading queue...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Right: detail -->
+  <aside class="panel hq-detail" aria-labelledby="detail-title" aria-live="polite">
+    <div class="panel-head"><h2 id="detail-title">Patient detail</h2><span class="panel-note">Every view is audited</span></div>
+    <div class="panel-body" id="detail-body">
+      <p class="empty">Select a patient in the queue.</p>
+    </div>
+  </aside>
+</main>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+<script src="{{ url_for('static', filename='js/hospital.js') }}"></script>
+{% endblock %}

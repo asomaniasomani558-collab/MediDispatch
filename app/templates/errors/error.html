@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }} - {{ APP_NAME }}{% endblock %}
+{% block body %}
+<main class="center-stage">
+  <div class="auth-card">
+    <div class="panel">
+      <div class="panel-body">
+        <h1 class="figure">{{ code }}</h1>
+        <p>{{ message or "Something went wrong." }}</p>
+        <p class="muted">If this is a medical emergency, call <a href="tel:{{ EMERGENCY_NUMBER }}">{{ EMERGENCY_NUMBER }}</a> now.</p>
+        <div class="btn-row">
+          <a class="btn" href="{{ url_for('index') }}">Go to start</a>
+          {% if code in (401, 403) %}<a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Sign in</a>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

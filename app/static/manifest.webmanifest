@@ -1,0 +1,15 @@
+{
+  "name": "MediDispatch GH - Emergency Help",
+  "short_name": "Get Help",
+  "description": "Report a medical emergency in Ghana and share your location with the nearest ambulance crew.",
+  "start_url": "/civilian/",
+  "scope": "/civilian/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a1428",
+  "theme_color": "#0a1428",
+  "icons": [
+    { "src": "/static/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
